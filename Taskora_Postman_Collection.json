@@ -1,0 +1,194 @@
+{
+  "info": {
+    "_postman_id": "taskora-collection-v1",
+    "name": "Taskora API",
+    "description": "Complete REST API collection for Taskora backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      { "key": "username", "value": "admin", "type": "string" },
+      { "key": "password", "value": "admin", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ayoub Hammaoui\",\n  \"email\": \"ayoub.hammaoui@example.com\",\n  \"password\": \"securePassword123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/users/1", "host": ["{{baseUrl}}"], "path": ["users", "1"] }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/users?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/users/1", "host": ["{{baseUrl}}"], "path": ["users", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ayoub Hammaoui Updated\",\n  \"email\": \"ayoub.updated@example.com\",\n  \"password\": \"newSecurePassword456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/users/1", "host": ["{{baseUrl}}"], "path": ["users", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "Create Client",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/clients", "host": ["{{baseUrl}}"], "path": ["clients"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"TechCorp Maroc\",\n  \"email\": \"contact@techcorp.ma\",\n  \"phone\": \"+212 6 61 23 45 67\",\n  \"company\": \"TechCorp Maroc SARL\",\n  \"userId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Client By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/clients/1", "host": ["{{baseUrl}}"], "path": ["clients", "1"] }
+          }
+        },
+        {
+          "name": "Get All Clients",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/clients?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["clients"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Client",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/clients/1", "host": ["{{baseUrl}}"], "path": ["clients", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"TechCorp Maroc Updated\",\n  \"email\": \"info@techcorp.ma\",\n  \"phone\": \"+212 6 70 98 76 54\",\n  \"company\": \"TechCorp Maroc SA\",\n  \"userId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Client",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/clients/1", "host": ["{{baseUrl}}"], "path": ["clients", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects", "host": ["{{baseUrl}}"], "path": ["projects"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"E-Commerce Platform Redesign\",\n  \"description\": \"Full redesign and development of the client e-commerce website with modern UI/UX.\",\n  \"budget\": 15000.00,\n  \"status\": \"EN_COURS\",\n  \"startDate\": \"2026-03-01\",\n  \"endDate\": \"2026-06-30\",\n  \"clientId\": 1,\n  \"userId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Project By ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/projects/1", "host": ["{{baseUrl}}"], "path": ["projects", "1"] }
+          }
+        },
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/projects?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Project",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/projects/1", "host": ["{{baseUrl}}"], "path": ["projects", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"E-Commerce Platform Redesign - Phase 2\",\n  \"description\": \"Phase 2: Advanced features including payment gateway and analytics dashboard.\",\n  \"budget\": 22000.00,\n  \"status\": \"TERMINE\",\n  \"startDate\": \"2026-03-01\",\n  \"endDate\": \"2026-09-30\",\n  \"clientId\": 1,\n  \"userId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Project",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/projects/1", "host": ["{{baseUrl}}"], "path": ["projects", "1"] }
+          }
+        }
+      ]
+    }
+  ]
+}

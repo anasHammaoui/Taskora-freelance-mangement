@@ -4,6 +4,7 @@ import com.example.Taskora.dto.request.CreateProjectRequest;
 import com.example.Taskora.dto.response.ProjectResponse;
 import com.example.Taskora.entity.Client;
 import com.example.Taskora.entity.Project;
+import com.example.Taskora.entity.ProjectStatus;
 import com.example.Taskora.entity.User;
 import com.example.Taskora.exception.ResourceNotFoundException;
 import com.example.Taskora.mapper.ProjectMapper;
@@ -55,6 +56,24 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<ProjectResponse> getProjectsByUser(Long userId, Pageable pageable) {
+        return projectRepository.findByUserId(userId, pageable).map(projectMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProjectResponse> getProjectsByStatus(ProjectStatus status, Pageable pageable) {
+        return projectRepository.findByStatus(status, pageable).map(projectMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProjectResponse> getProjectsByUserAndStatus(Long userId, ProjectStatus status, Pageable pageable) {
+        return projectRepository.findByUserIdAndStatus(userId, status, pageable).map(projectMapper::toResponse);
+    }
+
+    @Override
     public ProjectResponse updateProject(Long id, CreateProjectRequest request) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", id));
@@ -65,6 +84,15 @@ public class ProjectServiceImpl implements ProjectService {
         projectMapper.updateEntityFromRequest(request, project);
         project.setClient(client);
         project.setUser(user);
+        Project saved = projectRepository.save(project);
+        return projectMapper.toResponse(saved);
+    }
+
+    @Override
+    public ProjectResponse markAsComplete(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        project.setStatus(ProjectStatus.TERMINE);
         Project saved = projectRepository.save(project);
         return projectMapper.toResponse(saved);
     }

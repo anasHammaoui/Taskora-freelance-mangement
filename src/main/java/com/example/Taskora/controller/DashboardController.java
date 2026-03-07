@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,18 +20,21 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping("/freelancer/{userId}")
+    @PreAuthorize("hasRole('FREELANCER')")
     @Operation(summary = "Get freelancer dashboard metrics: clients, active projects, pending invoices, monthly revenue (last 6 months)")
     public ResponseEntity<FreelancerDashboardResponse> getFreelancerDashboard(@PathVariable Long userId) {
         return ResponseEntity.ok(dashboardService.getFreelancerDashboard(userId));
     }
 
     @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get admin dashboard metrics: freelancer stats, project stats, platform revenue (last 12 months)")
     public ResponseEntity<AdminDashboardResponse> getAdminDashboard() {
         return ResponseEntity.ok(dashboardService.getAdminDashboard());
     }
 
     @GetMapping("/freelancer/{userId}/revenue")
+    @PreAuthorize("hasRole('FREELANCER')")
     @Operation(summary = "Get freelancer daily revenue breakdown for a specific month. Params: year, month (e.g. ?year=2026&month=3)")
     public ResponseEntity<MonthlyRevenueDetailResponse> getFreelancerMonthlyRevenueDetail(
             @PathVariable Long userId,
@@ -40,6 +44,7 @@ public class DashboardController {
     }
 
     @GetMapping("/admin/revenue")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get platform-wide daily revenue breakdown for a specific month. Params: year, month (e.g. ?year=2026&month=3)")
     public ResponseEntity<MonthlyRevenueDetailResponse> getAdminMonthlyRevenueDetail(
             @RequestParam int year,

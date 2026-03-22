@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './layouts/MainLayout';
 import { RequireAuth, GuestOnly } from './components/auth/RouteGuard';
+import { RouterProgress } from './components/RouterProgress';
 
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
@@ -23,6 +24,7 @@ const Fallback = () => (
 const App: React.FC = () => {
   return (
     <Suspense fallback={<Fallback />}>
+      <RouterProgress />
       <Routes>
         {/* Public routes */}
         <Route element={<GuestOnly />}>

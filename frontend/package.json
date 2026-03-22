@@ -6,8 +6,20 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prod": "NODE_ENV=production tsc -b && vite build",
+    "start": "vite preview --port 4173",
+    "preview": "vite preview",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "clean": "rm -rf dist",
+    "ci": "npm run type-check && npm run lint && npm run build",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:login": "cypress run --spec cypress/e2e/login.cy.ts",
+    "cy:run:tasks": "cypress run --spec cypress/e2e/tasks.cy.ts",
+    "test:e2e": "npm run build && npm run start & cypress run"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
@@ -36,6 +48,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.0",
     "babel-plugin-react-compiler": "^1.0.0",
+    "cypress": "^15.12.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",

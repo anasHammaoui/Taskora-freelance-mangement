@@ -40,11 +40,7 @@ const RegisterPage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
+          <img src="/logo.png" alt="Taskora" className="w-48 mx-auto mb-6 object-contain" />
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Create your account</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">Start managing your freelance business</p>
         </div>

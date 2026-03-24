@@ -4,6 +4,7 @@ import { MainLayout } from './layouts/MainLayout';
 import { RequireAuth, GuestOnly } from './components/auth/RouteGuard';
 import { RouterProgress } from './components/RouterProgress';
 
+const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
@@ -26,6 +27,9 @@ const App: React.FC = () => {
     <Suspense fallback={<Fallback />}>
       <RouterProgress />
       <Routes>
+        {/* Landing page */}
+        <Route path="/" element={<LandingPage />} />
+
         {/* Public routes */}
         <Route element={<GuestOnly />}>
           <Route path="/login" element={<LoginPage />} />
@@ -54,7 +58,7 @@ const App: React.FC = () => {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

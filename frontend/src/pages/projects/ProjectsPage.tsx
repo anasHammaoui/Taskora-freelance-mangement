@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchProjects, createProject, updateProject, deleteProject, markProjectComplete } from '../../store/slices/projectSlice';
-import { fetchClients } from '../../store/slices/clientSlice';
+import { setLoading as setProjectsLoading, setProjects, setError as setProjectsError, addProject, updateProjectItem, removeProject } from '../../store/slices/projectSlice';
+import { setClients } from '../../store/slices/clientSlice';
+import { projectsApi } from '../../api/projects';
+import { clientsApi } from '../../api/clients';
 import type { ProjectResponse, ProjectStatus } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { ConfirmModal } from '../../components/ui/Modal';
@@ -22,10 +24,18 @@ const ProjectsPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<ProjectResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(() => {
-    if (user?.userId) {
-      dispatch(fetchProjects({ userId: user.userId }));
-      dispatch(fetchClients({ userId: user.userId }));
+  const load = useCallback(async () => {
+    if (!user?.userId) return;
+    dispatch(setProjectsLoading(true));
+    try {
+      const [projectsPage, clientsPage] = await Promise.all([
+        projectsApi.getByUser(user.userId),
+        clientsApi.getByUser(user.userId),
+      ]);
+      dispatch(setProjects(projectsPage));
+      dispatch(setClients(clientsPage));
+    } catch (err: any) {
+      dispatch(setProjectsError(err.response?.data?.message || 'Failed to load projects'));
     }
   }, [dispatch, user?.userId]);
 
@@ -37,30 +47,45 @@ const ProjectsPage: React.FC = () => {
   const onSave = async (data: ProjectFormData) => {
     if (!user?.userId) return;
     const payload = { ...data, userId: user.userId };
-    if (editing) {
-      const res = await dispatch(updateProject({ id: editing.id, data: payload }));
-      if (updateProject.fulfilled.match(res)) { toast.success('Project updated'); setModalOpen(false); }
-      else toast.error('Failed to update');
-    } else {
-      const res = await dispatch(createProject(payload));
-      if (createProject.fulfilled.match(res)) { toast.success('Project created'); setModalOpen(false); }
-      else toast.error('Failed to create');
+    try {
+      if (editing) {
+        const updated = await projectsApi.update(editing.id, payload);
+        dispatch(updateProjectItem(updated));
+        toast.success('Project updated');
+      } else {
+        const created = await projectsApi.create(payload);
+        dispatch(addProject(created));
+        toast.success('Project created');
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to save project');
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const res = await dispatch(deleteProject(deleteTarget.id));
-    setDeleting(false);
-    if (deleteProject.fulfilled.match(res)) { toast.success('Project deleted'); setDeleteTarget(null); }
-    else toast.error('Failed to delete');
+    try {
+      await projectsApi.delete(deleteTarget.id);
+      dispatch(removeProject(deleteTarget.id));
+      toast.success('Project deleted');
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete project');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleComplete = async (id: number) => {
-    const res = await dispatch(markProjectComplete(id));
-    if (markProjectComplete.fulfilled.match(res)) toast.success('Marked as complete');
-    else toast.error('Failed to update');
+    try {
+      const updated = await projectsApi.markComplete(id);
+      dispatch(updateProjectItem(updated));
+      toast.success('Marked as complete');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update project');
+    }
   };
 
   const filtered = projects.filter((p) => filter === 'ALL' || p.status === filter);

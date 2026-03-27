@@ -5,7 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { login } from '../../store/slices/authSlice';
+import { setLoading, setUser, setError } from '../../store/slices/authSlice';
+import { authApi } from '../../api/auth';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
@@ -26,12 +27,19 @@ const LoginPage: React.FC = () => {
   });
 
   const onSubmit = async (data: FormData) => {
-    const result = await dispatch(login(data));
-    if (login.fulfilled.match(result)) {
-      toast.success(`Welcome back, ${result.payload.fullName}!`);
+    dispatch(setLoading(true));
+    dispatch(setError(null));
+    try {
+      const res = await authApi.login(data);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res));
+      dispatch(setUser(res));
+      toast.success(`Welcome back, ${res.fullName}!`);
       navigate('/dashboard');
-    } else {
-      toast.error(result.payload as string || 'Login failed');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Login failed';
+      dispatch(setError(msg));
+      toast.error(msg);
     }
   };
 

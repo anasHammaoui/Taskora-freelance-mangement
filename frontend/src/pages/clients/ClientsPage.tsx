@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchClients, createClient, updateClient, deleteClient } from '../../store/slices/clientSlice';
+import { setLoading, setClients, setError, addClient, updateClientItem, removeClient } from '../../store/slices/clientSlice';
+import { clientsApi } from '../../api/clients';
 import type { ClientResponse } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { ConfirmModal } from '../../components/ui/Modal';
@@ -20,9 +21,16 @@ const ClientsPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<ClientResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(() => {
-    if (user?.userId) dispatch(fetchClients({ userId: user.userId, search: search || undefined }));
-  }, [dispatch, user?.userId, search]);
+  const load = useCallback(async () => {
+    if (!user?.userId) return;
+    dispatch(setLoading(true));
+    try {
+      const data = await clientsApi.getByUser(user.userId);
+      dispatch(setClients(data));
+    } catch (err: any) {
+      dispatch(setError(err.response?.data?.message || 'Failed to load clients'));
+    }
+  }, [dispatch, user?.userId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -32,24 +40,35 @@ const ClientsPage: React.FC = () => {
   const onSave = async (data: ClientFormData) => {
     if (!user?.userId) return;
     const payload = { ...data, userId: user.userId };
-    if (editing) {
-      const res = await dispatch(updateClient({ id: editing.id, data: payload }));
-      if (updateClient.fulfilled.match(res)) { toast.success('Client updated'); setModalOpen(false); }
-      else toast.error('Failed to update client');
-    } else {
-      const res = await dispatch(createClient(payload));
-      if (createClient.fulfilled.match(res)) { toast.success('Client created'); setModalOpen(false); }
-      else toast.error('Failed to create client');
+    try {
+      if (editing) {
+        const updated = await clientsApi.update(editing.id, payload);
+        dispatch(updateClientItem(updated));
+        toast.success('Client updated');
+      } else {
+        const created = await clientsApi.create(payload);
+        dispatch(addClient(created));
+        toast.success('Client created');
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to save client');
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const res = await dispatch(deleteClient(deleteTarget.id));
-    setDeleting(false);
-    if (deleteClient.fulfilled.match(res)) { toast.success('Client deleted'); setDeleteTarget(null); }
-    else toast.error('Failed to delete client');
+    try {
+      await clientsApi.delete(deleteTarget.id);
+      dispatch(removeClient(deleteTarget.id));
+      toast.success('Client deleted');
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete client');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filtered = clients.filter((c) =>

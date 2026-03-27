@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchTasksByUser, createTask, updateTask, deleteTask, markTaskDone } from '../../store/slices/taskSlice';
-import { fetchProjects } from '../../store/slices/projectSlice';
+import { setLoading, setTasks, setError, addTask, updateTaskItem, removeTask } from '../../store/slices/taskSlice';
+import { setProjects } from '../../store/slices/projectSlice';
+import { tasksApi } from '../../api/tasks';
+import { projectsApi } from '../../api/projects';
 import type { TaskResponse } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { ConfirmModal } from '../../components/ui/Modal';
@@ -21,10 +23,18 @@ const TasksPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<TaskResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(() => {
-    if (user?.userId) {
-      dispatch(fetchTasksByUser({ userId: user.userId, size: 200 }));
-      dispatch(fetchProjects({ userId: user.userId }));
+  const load = useCallback(async () => {
+    if (!user?.userId) return;
+    dispatch(setLoading(true));
+    try {
+      const [tasksPage, projectsPage] = await Promise.all([
+        tasksApi.getByUser(user.userId, { size: 200 }),
+        projectsApi.getByUser(user.userId),
+      ]);
+      dispatch(setTasks(tasksPage));
+      dispatch(setProjects(projectsPage));
+    } catch (err: any) {
+      dispatch(setError(err.response?.data?.message || 'Failed to load tasks'));
     }
   }, [dispatch, user?.userId]);
 
@@ -44,30 +54,45 @@ const TasksPage: React.FC = () => {
   const onSave = async (data: TaskFormData) => {
     if (!user?.userId) return;
     const payload = { ...data, userId: user.userId };
-    if (editing) {
-      const res = await dispatch(updateTask({ id: editing.id, data: payload }));
-      if (updateTask.fulfilled.match(res)) { toast.success('Task updated'); setModalOpen(false); }
-      else toast.error('Failed to update task');
-    } else {
-      const res = await dispatch(createTask(payload));
-      if (createTask.fulfilled.match(res)) { toast.success('Task created'); setModalOpen(false); }
-      else toast.error('Failed to create task');
+    try {
+      if (editing) {
+        const updated = await tasksApi.update(editing.id, payload);
+        dispatch(updateTaskItem(updated));
+        toast.success('Task updated');
+      } else {
+        const created = await tasksApi.create(payload);
+        dispatch(addTask(created));
+        toast.success('Task created');
+      }
+      setModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to save task');
     }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const res = await dispatch(deleteTask(deleteTarget.id));
-    setDeleting(false);
-    if (deleteTask.fulfilled.match(res)) { toast.success('Task deleted'); setDeleteTarget(null); }
-    else toast.error('Failed to delete');
+    try {
+      await tasksApi.delete(deleteTarget.id);
+      dispatch(removeTask(deleteTarget.id));
+      toast.success('Task deleted');
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete task');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleMarkDone = async (id: number) => {
-    const res = await dispatch(markTaskDone(id));
-    if (markTaskDone.fulfilled.match(res)) toast.success('Task completed!');
-    else toast.error('Failed to update');
+    try {
+      const updated = await tasksApi.markDone(id);
+      dispatch(updateTaskItem(updated));
+      toast.success('Task completed!');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update task');
+    }
   };
 
   const todo = tasks.filter((t) => t.status === 'A_FAIRE');

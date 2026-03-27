@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchFreelancers, banUser, activateUser, deleteUser } from '../../store/slices/userSlice';
+import { setLoading, setUsers, setError, updateUserItem, removeUser } from '../../store/slices/userSlice';
+import { usersApi } from '../../api/users';
 import type { UserResponse, UserStatus } from '../../types';
 import { ConfirmModal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -22,34 +23,55 @@ const AdminUsersPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<UserResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(() => {
-    dispatch(fetchFreelancers({
-      status: statusFilter !== 'ALL' ? statusFilter : undefined,
-      search: search || undefined,
-    }));
+  const load = useCallback(async () => {
+    dispatch(setLoading(true));
+    try {
+      const data = await usersApi.getFreelancers({
+        status: statusFilter !== 'ALL' ? statusFilter : undefined,
+        search: search || undefined,
+        size: 50,
+      });
+      dispatch(setUsers(data));
+    } catch (err: any) {
+      dispatch(setError(err.response?.data?.message || 'Failed to load users'));
+    }
   }, [dispatch, statusFilter, search]);
 
   useEffect(() => { load(); }, [load]);
 
   const handleBan = async (id: number) => {
-    const res = await dispatch(banUser(id));
-    if (banUser.fulfilled.match(res)) toast.success('User banned');
-    else toast.error('Failed to ban user');
+    try {
+      const updated = await usersApi.ban(id);
+      dispatch(updateUserItem(updated));
+      toast.success('User banned');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to ban user');
+    }
   };
 
   const handleActivate = async (id: number) => {
-    const res = await dispatch(activateUser(id));
-    if (activateUser.fulfilled.match(res)) toast.success('User activated');
-    else toast.error('Failed to activate user');
+    try {
+      const updated = await usersApi.activate(id);
+      dispatch(updateUserItem(updated));
+      toast.success('User activated');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to activate user');
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const res = await dispatch(deleteUser(deleteTarget.id));
-    setDeleting(false);
-    if (deleteUser.fulfilled.match(res)) { toast.success('User deleted'); setDeleteTarget(null); }
-    else toast.error('Failed to delete user');
+    try {
+      await usersApi.delete(deleteTarget.id);
+      dispatch(removeUser(deleteTarget.id));
+      toast.success('User deleted');
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete user');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filtered = users.filter((u) => {

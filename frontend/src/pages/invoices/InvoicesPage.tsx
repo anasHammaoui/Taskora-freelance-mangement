@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchInvoices, createInvoice, markInvoicePaid, cancelInvoice, deleteInvoice } from '../../store/slices/invoiceSlice';
-import { fetchProjects } from '../../store/slices/projectSlice';
+import { setLoading, setInvoices, setError, addInvoice, updateInvoiceItem, removeInvoice } from '../../store/slices/invoiceSlice';
+import { setProjects } from '../../store/slices/projectSlice';
+import { invoicesApi } from '../../api/invoices';
+import { projectsApi } from '../../api/projects';
 import type { InvoiceResponse, InvoiceStatus } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { ConfirmModal } from '../../components/ui/Modal';
@@ -28,10 +30,18 @@ const InvoicesPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<InvoiceResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(() => {
-    if (user?.userId) {
-      dispatch(fetchInvoices({ userId: user.userId }));
-      dispatch(fetchProjects({ userId: user.userId }));
+  const load = useCallback(async () => {
+    if (!user?.userId) return;
+    dispatch(setLoading(true));
+    try {
+      const [invoicesPage, projectsPage] = await Promise.all([
+        invoicesApi.getByUser(user.userId),
+        projectsApi.getByUser(user.userId),
+      ]);
+      dispatch(setInvoices(invoicesPage));
+      dispatch(setProjects(projectsPage));
+    } catch (err: any) {
+      dispatch(setError(err.response?.data?.message || 'Failed to load invoices'));
     }
   }, [dispatch, user?.userId]);
 
@@ -39,30 +49,49 @@ const InvoicesPage: React.FC = () => {
 
   const onSave = async (data: InvoiceFormData) => {
     if (!user?.userId) return;
-    const res = await dispatch(createInvoice({ ...data, userId: user.userId }));
-    if (createInvoice.fulfilled.match(res)) { toast.success('Invoice created'); setModalOpen(false); }
-    else toast.error('Failed to create invoice');
+    try {
+      const created = await invoicesApi.create({ ...data, userId: user.userId });
+      dispatch(addInvoice(created));
+      toast.success('Invoice created');
+      setModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to create invoice');
+    }
   };
 
   const handleMarkPaid = async (id: number) => {
-    const res = await dispatch(markInvoicePaid(id));
-    if (markInvoicePaid.fulfilled.match(res)) toast.success('Marked as paid');
-    else toast.error('Failed');
+    try {
+      const updated = await invoicesApi.markPaid(id);
+      dispatch(updateInvoiceItem(updated));
+      toast.success('Marked as paid');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update invoice');
+    }
   };
 
   const handleCancel = async (id: number) => {
-    const res = await dispatch(cancelInvoice(id));
-    if (cancelInvoice.fulfilled.match(res)) toast.success('Invoice cancelled');
-    else toast.error('Failed');
+    try {
+      const updated = await invoicesApi.cancel(id);
+      dispatch(updateInvoiceItem(updated));
+      toast.success('Invoice cancelled');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to cancel invoice');
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const res = await dispatch(deleteInvoice(deleteTarget.id));
-    setDeleting(false);
-    if (deleteInvoice.fulfilled.match(res)) { toast.success('Deleted'); setDeleteTarget(null); }
-    else toast.error('Failed to delete');
+    try {
+      await invoicesApi.delete(deleteTarget.id);
+      dispatch(removeInvoice(deleteTarget.id));
+      toast.success('Deleted');
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to delete invoice');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filtered = invoices.filter((inv) => filter === 'ALL' || inv.status === filter);

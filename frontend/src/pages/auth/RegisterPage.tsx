@@ -5,7 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { register as registerAction } from '../../store/slices/authSlice';
+import { setLoading, setUser, setError } from '../../store/slices/authSlice';
+import { authApi } from '../../api/auth';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
@@ -27,12 +28,19 @@ const RegisterPage: React.FC = () => {
   });
 
   const onSubmit = async (data: FormData) => {
-    const result = await dispatch(registerAction(data));
-    if (registerAction.fulfilled.match(result)) {
+    dispatch(setLoading(true));
+    dispatch(setError(null));
+    try {
+      const res = await authApi.register(data);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res));
+      dispatch(setUser(res));
       toast.success('Account created! Welcome aboard.');
       navigate('/dashboard');
-    } else {
-      toast.error(result.payload as string || 'Registration failed');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Registration failed';
+      dispatch(setError(msg));
+      toast.error(msg);
     }
   };
 

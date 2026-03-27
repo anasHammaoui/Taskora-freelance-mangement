@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchInvoiceById, markInvoicePaid, cancelInvoice } from '../../store/slices/invoiceSlice';
+import { setLoading, setSelected, setError, updateInvoiceItem } from '../../store/slices/invoiceSlice';
+import { invoicesApi } from '../../api/invoices';
 import { InvoiceStatusBadge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { formatCurrency, formatDate } from '../../utils/format';
@@ -15,21 +16,33 @@ const InvoiceDetailPage: React.FC = () => {
   const { selected: invoice, loading } = useAppSelector((s) => s.invoices);
 
   useEffect(() => {
-    if (id) dispatch(fetchInvoiceById(Number(id)));
+    if (!id) return;
+    dispatch(setLoading(true));
+    invoicesApi.getById(Number(id))
+      .then((data) => dispatch(setSelected(data)))
+      .catch((err) => dispatch(setError(err.response?.data?.message || 'Failed to load invoice')));
   }, [id, dispatch]);
 
   const handleMarkPaid = async () => {
     if (!invoice) return;
-    const res = await dispatch(markInvoicePaid(invoice.id));
-    if (markInvoicePaid.fulfilled.match(res)) toast.success('Invoice marked as paid');
-    else toast.error('Failed');
+    try {
+      const updated = await invoicesApi.markPaid(invoice.id);
+      dispatch(updateInvoiceItem(updated));
+      toast.success('Invoice marked as paid');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to update invoice');
+    }
   };
 
   const handleCancel = async () => {
     if (!invoice) return;
-    const res = await dispatch(cancelInvoice(invoice.id));
-    if (cancelInvoice.fulfilled.match(res)) toast.success('Invoice cancelled');
-    else toast.error('Failed');
+    try {
+      const updated = await invoicesApi.cancel(invoice.id);
+      dispatch(updateInvoiceItem(updated));
+      toast.success('Invoice cancelled');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to cancel invoice');
+    }
   };
 
   if (loading || !invoice) {

@@ -29,6 +29,8 @@ const ClientsPage: React.FC = () => {
       dispatch(setClients(data));
     } catch (err: any) {
       dispatch(setError(err.response?.data?.message || 'Failed to load clients'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch, user?.userId]);
 

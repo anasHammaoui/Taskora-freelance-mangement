@@ -36,6 +36,8 @@ const ProjectsPage: React.FC = () => {
       dispatch(setClients(clientsPage));
     } catch (err: any) {
       dispatch(setProjectsError(err.response?.data?.message || 'Failed to load projects'));
+    } finally {
+      dispatch(setProjectsLoading(false));
     }
   }, [dispatch, user?.userId]);
 

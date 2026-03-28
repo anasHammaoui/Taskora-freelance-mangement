@@ -34,6 +34,8 @@ const AdminUsersPage: React.FC = () => {
       dispatch(setUsers(data));
     } catch (err: any) {
       dispatch(setError(err.response?.data?.message || 'Failed to load users'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch, statusFilter, search]);
 

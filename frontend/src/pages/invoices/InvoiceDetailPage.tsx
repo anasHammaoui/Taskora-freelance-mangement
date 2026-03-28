@@ -20,7 +20,8 @@ const InvoiceDetailPage: React.FC = () => {
     dispatch(setLoading(true));
     invoicesApi.getById(Number(id))
       .then((data) => dispatch(setSelected(data)))
-      .catch((err) => dispatch(setError(err.response?.data?.message || 'Failed to load invoice')));
+      .catch((err) => dispatch(setError(err.response?.data?.message || 'Failed to load invoice')))
+      .finally(() => dispatch(setLoading(false)));
   }, [id, dispatch]);
 
   const handleMarkPaid = async () => {

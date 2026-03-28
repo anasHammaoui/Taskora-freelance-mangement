@@ -35,6 +35,8 @@ const TasksPage: React.FC = () => {
       dispatch(setProjects(projectsPage));
     } catch (err: any) {
       dispatch(setError(err.response?.data?.message || 'Failed to load tasks'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch, user?.userId]);
 

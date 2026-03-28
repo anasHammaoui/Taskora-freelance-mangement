@@ -42,6 +42,8 @@ const InvoicesPage: React.FC = () => {
       dispatch(setProjects(projectsPage));
     } catch (err: any) {
       dispatch(setError(err.response?.data?.message || 'Failed to load invoices'));
+    } finally {
+      dispatch(setLoading(false));
     }
   }, [dispatch, user?.userId]);
 
